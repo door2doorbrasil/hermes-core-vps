@@ -43,6 +43,7 @@ build/
 # Local data
 terminal_write_test.txt
 test_durations.json
+.last-hostinger-secrets.json
 
 # Hermes runtime data
 data/hermes-mail/**/*.jsonl

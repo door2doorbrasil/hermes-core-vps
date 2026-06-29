@@ -1,12 +1,33 @@
 name: hermes-core
 
-x-hermes-env: &hermes-env
+x-hermes-common-env: &hermes-common-env
   HERMES_DISABLE_LAZY_INSTALLS: "1"
   OPENAI_API_KEY: ${OPENAI_API_KEY:?set OPENAI_API_KEY}
-  API_SERVER_ENABLED: "true"
-  API_SERVER_KEY: ${API_SERVER_KEY:?set API_SERVER_KEY}
-  API_SERVER_HOST: "0.0.0.0"
-  API_SERVER_PORT: "8642"
+  BUY_IMAP_HOST: ${BUY_IMAP_HOST:?set BUY_IMAP_HOST}
+  BUY_IMAP_PORT: ${BUY_IMAP_PORT:?set BUY_IMAP_PORT}
+  BUY_IMAP_SSL: ${BUY_IMAP_SSL:-true}
+  BUY_IMAP_USERNAME: ${BUY_IMAP_USERNAME:?set BUY_IMAP_USERNAME}
+  BUY_IMAP_PASSWORD: ${BUY_IMAP_PASSWORD:?set BUY_IMAP_PASSWORD}
+  BUY_SMTP_HOST: ${BUY_SMTP_HOST:?set BUY_SMTP_HOST}
+  BUY_SMTP_PORT: ${BUY_SMTP_PORT:?set BUY_SMTP_PORT}
+  BUY_SMTP_SSL: ${BUY_SMTP_SSL:-true}
+  BUY_SMTP_USERNAME: ${BUY_SMTP_USERNAME:?set BUY_SMTP_USERNAME}
+  BUY_SMTP_PASSWORD: ${BUY_SMTP_PASSWORD:?set BUY_SMTP_PASSWORD}
+  SALES_IMAP_HOST: ${SALES_IMAP_HOST:-}
+  SALES_IMAP_PORT: ${SALES_IMAP_PORT:-}
+  SALES_IMAP_SSL: ${SALES_IMAP_SSL:-}
+  SALES_IMAP_USERNAME: ${SALES_IMAP_USERNAME:-}
+  SALES_IMAP_PASSWORD: ${SALES_IMAP_PASSWORD:-}
+  SALES_SMTP_HOST: ${SALES_SMTP_HOST:-}
+  SALES_SMTP_PORT: ${SALES_SMTP_PORT:-}
+  SALES_SMTP_SSL: ${SALES_SMTP_SSL:-}
+  SALES_SMTP_USERNAME: ${SALES_SMTP_USERNAME:-}
+  SALES_SMTP_PASSWORD: ${SALES_SMTP_PASSWORD:-}
+  HERMES_DASHBOARD_PUBLIC_URL: ${HERMES_DASHBOARD_PUBLIC_URL:-https://hermes.polarsinergy.com}
+
+x-hermes-image: &hermes-image
+  image: ${HERMES_IMAGE:?set HERMES_IMAGE}
+  platform: linux/amd64
 
 services:
   traefik:
@@ -36,66 +57,49 @@ services:
     networks:
       - edge
 
-  gateway:
-    build:
-      context: ${HERMES_BUILD_CONTEXT:-.}
-      args:
-        HERMES_GIT_SHA: ${HERMES_GIT_SHA:-local}
-    image: hermes-core:latest
+  hermes-agent:
+    <<: *hermes-image
     restart: unless-stopped
-    command: ["gateway", "run", "--no-supervise", "--replace"]
     environment:
-      <<: *hermes-env
-    volumes:
-      - hermes-data:/opt/data
-    expose:
-      - "8642"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8642/health >/dev/null || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 120s
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=edge
-      - traefik.http.routers.hermes-api.rule=Host(`${HERMES_API_HOSTNAME:-api.hermes.polarsinergy.com}`)
-      - traefik.http.routers.hermes-api.entrypoints=websecure
-      - traefik.http.routers.hermes-api.tls.certresolver=letsencrypt
-      - traefik.http.services.hermes-api.loadbalancer.server.port=8642
-    networks:
-      - edge
-
-  dashboard:
-    image: hermes-core:latest
-    restart: unless-stopped
-    command: ["dashboard", "--host", "0.0.0.0", "--port", "9119", "--no-open"]
-    environment:
-      <<: *hermes-env
+      <<: *hermes-common-env
+      HERMES_DASHBOARD: "true"
+      HERMES_DASHBOARD_HOST: "0.0.0.0"
+      HERMES_DASHBOARD_PORT: "4860"
       HERMES_DASHBOARD_BASIC_AUTH_USERNAME: ${HERMES_DASHBOARD_BASIC_AUTH_USERNAME:?set HERMES_DASHBOARD_BASIC_AUTH_USERNAME}
       HERMES_DASHBOARD_BASIC_AUTH_PASSWORD: ${HERMES_DASHBOARD_BASIC_AUTH_PASSWORD:?set HERMES_DASHBOARD_BASIC_AUTH_PASSWORD}
       HERMES_DASHBOARD_BASIC_AUTH_SECRET: ${HERMES_DASHBOARD_BASIC_AUTH_SECRET:?set HERMES_DASHBOARD_BASIC_AUTH_SECRET}
-      HERMES_DASHBOARD_PUBLIC_URL: ${HERMES_DASHBOARD_PUBLIC_URL:-https://hermes.polarsinergy.com}
-    depends_on:
-      gateway:
-        condition: service_healthy
     volumes:
       - hermes-data:/opt/data
     expose:
-      - "9119"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsSI http://127.0.0.1:9119/ >/dev/null || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 120s
+      - "4860"
     labels:
       - traefik.enable=true
       - traefik.docker.network=edge
       - traefik.http.routers.hermes-dashboard.rule=Host(`${HERMES_DASHBOARD_HOSTNAME:-hermes.polarsinergy.com}`)
       - traefik.http.routers.hermes-dashboard.entrypoints=websecure
+      - traefik.http.routers.hermes-dashboard.tls=true
       - traefik.http.routers.hermes-dashboard.tls.certresolver=letsencrypt
-      - traefik.http.services.hermes-dashboard.loadbalancer.server.port=9119
+      - traefik.http.services.hermes-dashboard.loadbalancer.server.port=4860
+    networks:
+      - edge
+
+  hermes-rfq-mail-worker:
+    <<: *hermes-image
+    restart: unless-stopped
+    command:
+      - python3
+      - /opt/data/hermes-mail/scripts/rfq_email_worker.py
+      - run
+      - --interval
+      - "120"
+      - --max-replies
+      - "10"
+    environment:
+      <<: *hermes-common-env
+    volumes:
+      - hermes-data:/opt/data
+    depends_on:
+      - hermes-agent
     networks:
       - edge
 
@@ -103,12 +107,10 @@ services:
     image: ghcr.io/berriai/litellm:main-latest
     restart: unless-stopped
     depends_on:
-      gateway:
-        condition: service_healthy
+      - hermes-agent
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY:?set OPENAI_API_KEY}
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-sk-local}
-      API_SERVER_KEY: ${API_SERVER_KEY:?set API_SERVER_KEY}
       NO_LOG: "1"
       SCARF_NO_ANALYTICS: "true"
       DO_NOT_TRACK: "true"
@@ -131,8 +133,7 @@ services:
     image: ghcr.io/open-webui/open-webui:main
     restart: unless-stopped
     depends_on:
-      litellm:
-        condition: service_started
+      - litellm
     environment:
       OPENAI_API_BASE_URL: http://litellm:4000/v1
       OPENAI_API_KEY: ${LITELLM_MASTER_KEY:-sk-local}
@@ -150,6 +151,7 @@ services:
       - traefik.docker.network=edge
       - traefik.http.routers.hermes-webui.rule=Host(`${OPEN_WEBUI_HOSTNAME:-webui.hermes.polarsinergy.com}`)
       - traefik.http.routers.hermes-webui.entrypoints=websecure
+      - traefik.http.routers.hermes-webui.tls=true
       - traefik.http.routers.hermes-webui.tls.certresolver=letsencrypt
       - traefik.http.services.hermes-webui.loadbalancer.server.port=8080
     networks:
