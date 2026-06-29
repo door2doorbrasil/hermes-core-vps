@@ -191,6 +191,14 @@ RUN cd web && npm run build && \
 # .dockerignore excludes node_modules, so the installs above survive.
 COPY . .
 
+# Pre-bake the WhatsApp bridge dependencies into the image. The VPS mount keeps
+# /opt/hermes immutable, so runtime `npm install` inside scripts/whatsapp-bridge
+# fails with EACCES and the bridge never comes up.
+RUN cd scripts/whatsapp-bridge && \
+    npm install --prefer-offline --no-audit --silent && \
+    mkdir -p node_modules && \
+    sha256sum package.json | cut -d' ' -f1 > node_modules/.hermes-pkg-hash
+
 # ---------- Permissions ----------
 # Link hermes-agent itself (editable). Deps are already installed in the
 # cached layer above; `--no-deps` makes this a fast egg-link creation with no

@@ -3,6 +3,7 @@ name: hermes-core
 x-hermes-common-env: &hermes-common-env
   HERMES_DISABLE_LAZY_INSTALLS: "1"
   OPENAI_API_KEY: ${OPENAI_API_KEY:?set OPENAI_API_KEY}
+  API_SERVER_KEY: ${API_SERVER_KEY:?set API_SERVER_KEY}
   BUY_IMAP_HOST: ${BUY_IMAP_HOST:?set BUY_IMAP_HOST}
   BUY_IMAP_PORT: ${BUY_IMAP_PORT:?set BUY_IMAP_PORT}
   BUY_IMAP_SSL: ${BUY_IMAP_SSL:-true}
@@ -23,6 +24,7 @@ x-hermes-common-env: &hermes-common-env
   SALES_SMTP_SSL: ${SALES_SMTP_SSL:-}
   SALES_SMTP_USERNAME: ${SALES_SMTP_USERNAME:-}
   SALES_SMTP_PASSWORD: ${SALES_SMTP_PASSWORD:-}
+  WHATSAPP_ALLOWED_USERS: ${WHATSAPP_ALLOWED_USERS:-}
   HERMES_DASHBOARD_PUBLIC_URL: ${HERMES_DASHBOARD_PUBLIC_URL:-https://hermes.polarsinergy.com}
 
 x-hermes-image: &hermes-image
@@ -40,15 +42,14 @@ services:
       - |
         cat >/etc/caddy/Caddyfile <<EOF
         {
-          auto_https disable_redirects
           email ${ACME_EMAIL:?set ACME_EMAIL}
         }
 
-        http://hermes.polarsinergy.com {
+        hermes.polarsinergy.com {
           reverse_proxy hermes-agent:4860
         }
 
-        http://webui.hermes.polarsinergy.com {
+        webui.hermes.polarsinergy.com {
           reverse_proxy open-webui:8080
         }
         EOF
@@ -77,6 +78,8 @@ services:
       HERMES_DASHBOARD_BASIC_AUTH_USERNAME: ${HERMES_DASHBOARD_BASIC_AUTH_USERNAME:?set HERMES_DASHBOARD_BASIC_AUTH_USERNAME}
       HERMES_DASHBOARD_BASIC_AUTH_PASSWORD: ${HERMES_DASHBOARD_BASIC_AUTH_PASSWORD:?set HERMES_DASHBOARD_BASIC_AUTH_PASSWORD}
       HERMES_DASHBOARD_BASIC_AUTH_SECRET: ${HERMES_DASHBOARD_BASIC_AUTH_SECRET:?set HERMES_DASHBOARD_BASIC_AUTH_SECRET}
+      WHATSAPP_ENABLED: "true"
+      WHATSAPP_MODE: "bridge"
     volumes:
       - hermes-data:/opt/data
     expose:
