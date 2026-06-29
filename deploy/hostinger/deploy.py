@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import ssl
 import sys
 import time
 from typing import Any
@@ -27,6 +28,12 @@ SMOKE_EXPECT = os.getenv("HOSTINGER_SMOKE_EXPECT", "Hermes")
 SMOKE_TIMEOUT = int(os.getenv("HOSTINGER_SMOKE_TIMEOUT", "180"))
 POLL_SECONDS = int(os.getenv("HOSTINGER_POLL_SECONDS", "10"))
 POLL_ATTEMPTS = int(os.getenv("HOSTINGER_POLL_ATTEMPTS", "120"))
+CA_BUNDLE = os.getenv("HOSTINGER_CA_BUNDLE")
+INSECURE_SSL = os.getenv("HOSTINGER_INSECURE_SSL", "").lower() in {
+    "1",
+    "true",
+    "yes",
+}
 DEPLOY_ENV_KEYS = [
     "HERMES_IMAGE",
     "ACME_EMAIL",
@@ -66,6 +73,14 @@ def fail(message: str) -> None:
     raise SystemExit(1)
 
 
+def ssl_context() -> ssl.SSLContext:
+    if INSECURE_SSL:
+        return ssl._create_unverified_context()
+    if CA_BUNDLE:
+        return ssl.create_default_context(cafile=CA_BUNDLE)
+    return ssl.create_default_context()
+
+
 def request(method: str, path: str, payload: dict[str, Any] | None = None) -> Any:
     url = f"{API_BASE}{path}"
     headers = {
@@ -80,7 +95,7 @@ def request(method: str, path: str, payload: dict[str, Any] | None = None) -> An
 
     req = Request(url, data=data, headers=headers, method=method)
     try:
-        with urlopen(req, timeout=120) as response:
+        with urlopen(req, timeout=120, context=ssl_context()) as response:
             body = response.read().decode("utf-8").strip()
             return json.loads(body) if body else None
     except HTTPError as exc:
@@ -153,7 +168,7 @@ def smoke_test() -> None:
     last_error: Exception | None = None
     while time.time() < deadline:
         try:
-            with urlopen(SMOKE_URL, timeout=15) as response:
+            with urlopen(SMOKE_URL, timeout=15, context=ssl_context()) as response:
                 body = response.read().decode("utf-8", errors="replace")
                 if SMOKE_EXPECT in body:
                     print(f"Smoke test passed: {SMOKE_URL}")
