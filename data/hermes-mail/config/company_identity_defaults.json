@@ -1,0 +1,26 @@
+{
+  "Polar Sinergy LLC": {
+    "company_name": "Polar Sinergy LLC",
+    "default_profile": "compras",
+    "default_language": "en",
+    "timezone": "America/New_York",
+    "email_address": "buyer@polarsinergy.com",
+    "company_domain": "polarsinergy.com",
+    "company_logo": "",
+    "default_signature_plain": "Polar Sinergy LLC\nAluizio Andreatta\nE-mail: buyer@polarsinergy.com\nPhone: +1 321 948 9126\nWhatsApp: +55 44 99156 9673\nWebsite: https://www.polarsinergy.com",
+    "default_agent": "polar-sinergy-compras",
+    "default_tools": ["IMAP", "SMTP", "ERP", "CRM", "OCR", "OpenAI", "Upload de documentos", "Aprovação de e-mails", "Aprovação de RFQ"]
+  },
+  "D2D Representação Comercial Ltda": {
+    "company_name": "D2D Representação Comercial Ltda",
+    "default_profile": "vendas",
+    "default_language": "pt-BR",
+    "timezone": "America/Sao_Paulo",
+    "email_address": "aluizio@door2doorbrasil.com.br",
+    "company_domain": "door2doorbrasil.com.br",
+    "company_logo": "",
+    "default_signature_plain": "D2D Representação Comercial Ltda\nMaringá - Paraná - Brasil\n\nAluizio Andreatta\nVendas Internacionais\nE-mail: aluizio@door2doorbrasil.com.br\nPhone/WhatsApp: +55 44 99156-9673",
+    "default_agent": "d2d-representacao-vendas",
+    "default_tools": ["IMAP", "SMTP", "ERP", "CRM", "OCR", "OpenAI", "Upload de documentos", "Aprovação de campanhas", "Aprovação de propostas"]
+  }
+}

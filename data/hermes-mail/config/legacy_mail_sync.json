@@ -1,0 +1,31 @@
+{
+  "enabled": true,
+  "source_account": "sales",
+  "target_account": "buyer",
+  "read_only_source": true,
+  "copy_mode": true,
+  "delete_source": false,
+  "preserve_folders": true,
+  "folders": {
+    "inbox": {
+      "source": "INBOX",
+      "target": "INBOX"
+    },
+    "sent": {
+      "source": "Sent",
+      "target": "Sent"
+    }
+  },
+  "subject_filters": [
+    "quote",
+    "quotation",
+    "cotacao",
+    "cotação",
+    "rfq",
+    "proposta",
+    "offer",
+    "price"
+  ],
+  "dry_run": true,
+  "max_initial_sync": 500
+}

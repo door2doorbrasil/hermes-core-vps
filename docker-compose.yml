@@ -1,0 +1,165 @@
+name: hermes-core
+
+x-hermes-env: &hermes-env
+  HERMES_DISABLE_LAZY_INSTALLS: "1"
+  OPENAI_API_KEY: ${OPENAI_API_KEY:?set OPENAI_API_KEY}
+  API_SERVER_ENABLED: "true"
+  API_SERVER_KEY: ${API_SERVER_KEY:?set API_SERVER_KEY}
+  API_SERVER_HOST: "0.0.0.0"
+  API_SERVER_PORT: "8642"
+
+services:
+  traefik:
+    image: traefik:v3.1
+    restart: unless-stopped
+    command:
+      - --api.dashboard=false
+      - --api.insecure=false
+      - --log.level=INFO
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=edge
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:?set ACME_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - traefik-letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - edge
+
+  gateway:
+    build:
+      context: .
+      args:
+        HERMES_GIT_SHA: ${HERMES_GIT_SHA:-local}
+    image: hermes-core:latest
+    restart: unless-stopped
+    command: ["gateway", "run", "--no-supervise", "--replace"]
+    environment:
+      <<: *hermes-env
+    volumes:
+      - hermes-data:/opt/data
+    expose:
+      - "8642"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8642/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=edge
+      - traefik.http.routers.hermes-api.rule=Host(`${HERMES_API_HOSTNAME:-api.hermes.polarsinergy.com}`)
+      - traefik.http.routers.hermes-api.entrypoints=websecure
+      - traefik.http.routers.hermes-api.tls.certresolver=letsencrypt
+      - traefik.http.services.hermes-api.loadbalancer.server.port=8642
+    networks:
+      - edge
+
+  dashboard:
+    image: hermes-core:latest
+    restart: unless-stopped
+    command: ["dashboard", "--host", "0.0.0.0", "--port", "9119", "--no-open"]
+    environment:
+      <<: *hermes-env
+      HERMES_DASHBOARD_BASIC_AUTH_USERNAME: ${HERMES_DASHBOARD_BASIC_AUTH_USERNAME:?set HERMES_DASHBOARD_BASIC_AUTH_USERNAME}
+      HERMES_DASHBOARD_BASIC_AUTH_PASSWORD: ${HERMES_DASHBOARD_BASIC_AUTH_PASSWORD:?set HERMES_DASHBOARD_BASIC_AUTH_PASSWORD}
+      HERMES_DASHBOARD_BASIC_AUTH_SECRET: ${HERMES_DASHBOARD_BASIC_AUTH_SECRET:?set HERMES_DASHBOARD_BASIC_AUTH_SECRET}
+      HERMES_DASHBOARD_PUBLIC_URL: ${HERMES_DASHBOARD_PUBLIC_URL:-https://hermes.polarsinergy.com}
+    depends_on:
+      gateway:
+        condition: service_healthy
+    volumes:
+      - hermes-data:/opt/data
+    expose:
+      - "9119"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSI http://127.0.0.1:9119/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=edge
+      - traefik.http.routers.hermes-dashboard.rule=Host(`${HERMES_DASHBOARD_HOSTNAME:-hermes.polarsinergy.com}`)
+      - traefik.http.routers.hermes-dashboard.entrypoints=websecure
+      - traefik.http.routers.hermes-dashboard.tls.certresolver=letsencrypt
+      - traefik.http.services.hermes-dashboard.loadbalancer.server.port=9119
+    networks:
+      - edge
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    restart: unless-stopped
+    depends_on:
+      gateway:
+        condition: service_healthy
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?set OPENAI_API_KEY}
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-sk-local}
+      API_SERVER_KEY: ${API_SERVER_KEY:?set API_SERVER_KEY}
+      NO_LOG: "1"
+      SCARF_NO_ANALYTICS: "true"
+      DO_NOT_TRACK: "true"
+      ANONYMIZED_TELEMETRY: "false"
+    volumes:
+      - ./litellm.yaml:/app/config.yaml:ro
+    command:
+      - "--config"
+      - "/app/config.yaml"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "4000"
+    expose:
+      - "4000"
+    networks:
+      - edge
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    restart: unless-stopped
+    depends_on:
+      litellm:
+        condition: service_started
+    environment:
+      OPENAI_API_BASE_URL: http://litellm:4000/v1
+      OPENAI_API_KEY: ${LITELLM_MASTER_KEY:-sk-local}
+      BYPASS_MODEL_ACCESS_CONTROL: "True"
+      FORWARDED_ALLOW_IPS: "*"
+      SCARF_NO_ANALYTICS: "true"
+      DO_NOT_TRACK: "true"
+      ANONYMIZED_TELEMETRY: "false"
+    volumes:
+      - open-webui-data:/app/backend/data
+    expose:
+      - "8080"
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=edge
+      - traefik.http.routers.hermes-webui.rule=Host(`${OPEN_WEBUI_HOSTNAME:-webui.hermes.polarsinergy.com}`)
+      - traefik.http.routers.hermes-webui.entrypoints=websecure
+      - traefik.http.routers.hermes-webui.tls.certresolver=letsencrypt
+      - traefik.http.services.hermes-webui.loadbalancer.server.port=8080
+    networks:
+      - edge
+
+volumes:
+  hermes-data:
+  open-webui-data:
+  traefik-letsencrypt:
+
+networks:
+  edge:
+    name: edge

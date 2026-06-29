@@ -1,0 +1,26 @@
+{
+  "version": "0.1.0",
+  "imap": {
+    "read_only": true,
+    "case_insensitive_subject_filter": true,
+    "initial_subject_terms": [
+      "quotation",
+      "quote",
+      "rfq",
+      "request for quotation",
+      "cotação",
+      "cotacao"
+    ]
+  },
+  "telegram": {
+    "approval_requests_required": true,
+    "approval_format": "Hermes Mail - Aprovação necessária"
+  },
+  "smtp": {
+    "real_send_blocked_by_default": true,
+    "real_send_requires_explicit_approval": true,
+    "approve_send_command": "approve-send <draft_id>"
+  },
+  "task_types": {},
+  "auto_after_first_approval": false
+}

@@ -1,0 +1,39 @@
+{
+  "roles": {
+    "admin": {
+      "allowed_agents": ["*"],
+      "allowed_tools": ["*"],
+      "allowed_actions": ["*"]
+    },
+    "compras": {
+      "allowed_agents": ["polar-sinergy-compras"],
+      "allowed_tools": ["IMAP", "SMTP", "ERP", "CRM", "OCR", "OpenAI", "Upload de documentos", "Aprovação de e-mails", "Aprovação de RFQ", "Aprovação de propostas", "Integrações externas"],
+      "allowed_actions": ["rfq", "supplier_approval", "email_ingest", "email_send_approved"]
+    },
+    "vendas": {
+      "allowed_agents": ["polar-sinergy-vendas", "d2d-representacao-vendas"],
+      "allowed_tools": ["IMAP", "SMTP", "ERP", "CRM", "OCR", "OpenAI", "Upload de documentos", "Aprovação de campanhas", "Aprovação de propostas", "Integrações externas"],
+      "allowed_actions": ["campaigns", "lead_followup", "proposal_approval", "sales_email"]
+    },
+    "agenciamento_cargas": {
+      "allowed_agents": ["hermes-agenciamento-de-cargas"],
+      "allowed_tools": ["IMAP", "SMTP", "ERP", "OCR", "OpenAI", "Upload de documentos", "Integrações externas"],
+      "allowed_actions": ["shipment_tracking", "booking", "bl_awb", "ce_mercante", "duimp", "due"]
+    },
+    "comex": {
+      "allowed_agents": ["hermes-comex"],
+      "allowed_tools": ["ERP", "OCR", "OpenAI", "Upload de documentos", "Integrações externas"],
+      "allowed_actions": ["duimp", "due", "lpco", "classificacao_fiscal", "document_review"]
+    },
+    "financeiro": {
+      "allowed_agents": ["hermes-financeiro"],
+      "allowed_tools": ["ERP", "OpenAI", "Upload de documentos", "Integrações externas"],
+      "allowed_actions": ["payables", "receivables", "cash_flow", "fx", "reconciliation"]
+    },
+    "supervisor": {
+      "allowed_agents": ["*"],
+      "allowed_tools": ["dashboard"],
+      "allowed_actions": ["view_only"]
+    }
+  }
+}

@@ -1,0 +1,313 @@
+{
+  "description": "Purchase governance and logistics intelligence records for Hermes Compras.",
+  "tables": [
+    {
+      "fields": [
+        "id",
+        "legal_name",
+        "trade_name",
+        "country",
+        "city",
+        "website",
+        "email",
+        "phone",
+        "status",
+        "notes",
+        "created_at",
+        "updated_at"
+      ],
+      "name": "purchase_companies",
+      "required_fields": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "fields": [
+        "id",
+        "company_id",
+        "name",
+        "technical_spec",
+        "sku",
+        "category",
+        "unit",
+        "target_price",
+        "currency",
+        "incoterm",
+        "moq",
+        "created_at",
+        "updated_at",
+        "notes"
+      ],
+      "name": "purchase_products",
+      "required_fields": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "fields": [
+        "id",
+        "company_id",
+        "name",
+        "title",
+        "email",
+        "phone",
+        "channel",
+        "status",
+        "notes",
+        "created_at",
+        "updated_at"
+      ],
+      "name": "purchase_contacts",
+      "required_fields": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "fields": [
+        "id",
+        "product_id",
+        "company_id",
+        "created_at",
+        "authorized_at",
+        "authorized_by",
+        "authorization_scope",
+        "status",
+        "user_decision_required",
+        "user_decision",
+        "notes",
+        "decision_gate",
+        "updated_at"
+      ],
+      "name": "rfq_batches",
+      "required_fields": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "fields": [
+        "id",
+        "rfq_batch_id",
+        "supplier_company_id",
+        "contact_id",
+        "country",
+        "city",
+        "website",
+        "contact_value",
+        "contact_status",
+        "observation",
+        "email_status",
+        "notes",
+        "created_at",
+        "updated_at"
+      ],
+      "name": "rfq_batch_suppliers",
+      "required_fields": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "fields": [
+        "id",
+        "rfq_batch_id",
+        "supplier_company_id",
+        "product_id",
+        "quote_currency",
+        "unit_price_usd",
+        "moq",
+        "production_lead_time_days",
+        "transit_time_days",
+        "incoterm",
+        "payment_terms",
+        "freight_estimate",
+        "total_land_cost",
+        "validity_date",
+        "quote_received_at",
+        "status",
+        "quote_payload_json",
+        "notes",
+        "created_at",
+        "updated_at"
+      ],
+      "name": "supplier_quotes",
+      "required_fields": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "fields": [
+        "id",
+        "rfq_batch_id",
+        "supplier_id",
+        "product_id",
+        "quote_id",
+        "recommendation_type",
+        "recommendation_title",
+        "recommendation_text",
+        "reasoning_summary",
+        "risk_summary",
+        "suggested_action",
+        "user_decision_required",
+        "user_decision",
+        "user_decision_by",
+        "user_decision_at",
+        "status",
+        "decision_gate",
+        "created_at",
+        "updated_at"
+      ],
+      "name": "hermes_decision_recommendations",
+      "required_fields": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "fields": [
+        "id",
+        "origin_country",
+        "origin_city",
+        "origin_port",
+        "destination_country",
+        "destination_city",
+        "destination_port",
+        "modal",
+        "route",
+        "carrier",
+        "freight_forwarder",
+        "currency",
+        "freight_value",
+        "container_type",
+        "chargeable_weight",
+        "volume_cbm",
+        "gross_weight",
+        "transit_time_days",
+        "validity_date",
+        "source_type",
+        "source_name",
+        "source_url",
+        "source_email_id",
+        "source_attachment_id",
+        "market_trend",
+        "risk_level",
+        "notes",
+        "created_at",
+        "updated_at"
+      ],
+      "name": "freight_market_intelligence",
+      "required_fields": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "fields": [
+        "id",
+        "title",
+        "summary",
+        "source_name",
+        "source_url",
+        "published_at",
+        "collected_at",
+        "modal",
+        "affected_routes",
+        "affected_countries",
+        "affected_ports",
+        "affected_airports",
+        "affected_carriers",
+        "risk_level",
+        "expected_impact",
+        "recommended_action",
+        "related_rfq_batch_id",
+        "related_product_id",
+        "status",
+        "created_at",
+        "updated_at"
+      ],
+      "name": "logistics_news_alerts",
+      "required_fields": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "fields": [
+        "id",
+        "rfq_batch_id",
+        "supplier_id",
+        "product_id",
+        "quote_id",
+        "stock_current_qty",
+        "stock_reserved_qty",
+        "stock_available_qty",
+        "stock_in_transit_qty",
+        "stock_min_qty",
+        "monthly_average_sales_qty",
+        "stock_coverage_days",
+        "production_lead_time_days",
+        "transit_time_days",
+        "estimated_customs_clearance_days",
+        "total_replenishment_days",
+        "rupture_risk_level",
+        "freight_trend",
+        "freight_risk_level",
+        "product_price_trend",
+        "exchange_rate_risk_level",
+        "margin_status",
+        "recommendation",
+        "reasoning_summary",
+        "user_decision_required",
+        "user_decision",
+        "created_at",
+        "updated_at"
+      ],
+      "name": "purchase_timing_analysis",
+      "required_fields": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "fields": [
+        "id",
+        "decision_context",
+        "related_entity_type",
+        "related_entity_id",
+        "rfq_batch_id",
+        "supplier_id",
+        "product_id",
+        "quote_id",
+        "recommendation_id",
+        "decision",
+        "decision_label",
+        "decided_by",
+        "decided_at",
+        "decision_source",
+        "notes",
+        "payload_json",
+        "created_at"
+      ],
+      "name": "user_decision_logs",
+      "required_fields": [
+        "id",
+        "created_at"
+      ]
+    }
+  ],
+  "version": "1.0.0"
+}

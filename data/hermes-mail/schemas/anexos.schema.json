@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "https://example.local/schemas/anexos.schema.json",
+  "title": "Anexo",
+  "description": "Arquivo anexo associado a um e-mail ou cotação.",
+  "required": [
+    "id",
+    "email_id",
+    "filename",
+    "mime_type",
+    "size_bytes",
+    "sha256",
+    "storage_path",
+    "created_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "email_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "quote_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "filename": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mime_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "size_bytes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "sha256": {
+      "type": "string",
+      "minLength": 1
+    },
+    "storage_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "extracted_text_path": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "ocr_text_path": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "stored",
+        "extracted",
+        "ocr_pending",
+        "ocr_done",
+        "failed"
+      ]
+    },
+    "source": {
+      "type": "string",
+      "default": "email"
+    },
+    "version": {
+      "type": "string",
+      "default": "0.1.0"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

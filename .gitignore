@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtualenv
+.venv/
+venv/
+env/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Playwright
+.playwright/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.*
+
+# Runtime
+tmp/
+cache/
+
+# Build
+dist/
+build/
+
+# Local data
+terminal_write_test.txt
+test_durations.json
+
+# Hermes runtime data
+data/hermes-mail/**/*.jsonl
+data/hermes-mail/state/*.json
+!data/hermes-mail/state/secrets.example.json
+!data/hermes-mail/state/secrets.json.example

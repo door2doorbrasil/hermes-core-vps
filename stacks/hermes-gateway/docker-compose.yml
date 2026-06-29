@@ -1,0 +1,40 @@
+services:
+  hermes-gateway:
+    image: python:3.11-slim
+    container_name: hermes-gateway
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./app:/app
+    command: sh -c "pip install -r requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8080"
+    environment:
+      - LITELLM_URL=http://litellm:4000
+      - DATABASE_URL=postgresql://hermes:hermespass@hermes-acl-db:5432/hermes_acl
+      - OPENWEBUI_API_KEY=hermes-prod-key
+      - LITELLM_API_KEY=sk-local
+      - WHATSAPP_ALLOW_ALL_USERS=false
+    networks:
+      - web
+    depends_on:
+      - hermes-acl-db
+
+  hermes-acl-db:
+    image: postgres:16
+    container_name: hermes-acl-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=hermes_acl
+      - POSTGRES_USER=hermes
+      - POSTGRES_PASSWORD=hermespass
+    volumes:
+      - hermes-acl-db:/var/lib/postgresql/data
+    networks:
+      - web
+
+volumes:
+  hermes-acl-db:
+
+networks:
+  web:
+    external: true
+    name: hermes-agent-fi18_default

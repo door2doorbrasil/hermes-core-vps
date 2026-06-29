@@ -1,0 +1,29 @@
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: unless-stopped
+
+    environment:
+      - BYPASS_MODEL_ACCESS_CONTROL=True
+
+    networks:
+      - web
+
+    volumes:
+      - open-webui:/app/backend/data
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.open-webui.rule=Host(`webui.hermes.polarsinergy.com`)"
+      - "traefik.http.routers.open-webui.entrypoints=websecure"
+      - "traefik.http.routers.open-webui.tls.certresolver=letsencrypt"
+      - "traefik.http.services.open-webui.loadbalancer.server.port=8080"
+
+volumes:
+  open-webui:
+
+networks:
+  web:
+    external: true
+    name: hermes-agent-fi18_default

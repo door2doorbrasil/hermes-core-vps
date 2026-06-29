@@ -1,0 +1,371 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Hermes Mail Sourcing API",
+    "version": "1.0.0",
+    "description": "OpenAPI schema for the local Hermes Mail sourcing API used by Open WebUI in dry_run mode."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8787",
+      "description": "Local Hermes Mail API"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "Service health",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sourcing/request": {
+      "post": {
+        "operationId": "createSourcingRequest",
+        "summary": "Create a sourcing request",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourcingRequestInput"
+              },
+              "example": {
+                "product_description": "Semi-automatic wafer cone making machine, 1000-1200 pcs/hour, electric heating, 380V 60Hz 3-phase, with mixer, dosing, baking and cone rolling unit.",
+                "region": "China, India, Turkey, Europe",
+                "quantity": "1 unit",
+                "application": "Food processing / ice cream cone production",
+                "customer": "Internal sourcing test",
+                "notes": "Prefer real manufacturers. Avoid marketplaces unless used only for discovery.",
+                "attachments": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sourcing request created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sourcing/request/{request_id}": {
+      "get": {
+        "operationId": "getSourcingRequest",
+        "summary": "Get a sourcing request",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequestId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Request not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sourcing/request/{request_id}/status": {
+      "get": {
+        "operationId": "getSourcingRequestStatus",
+        "summary": "Get request status",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequestId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Request not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sourcing/request/{request_id}/report": {
+      "get": {
+        "operationId": "getSourcingRequestReport",
+        "summary": "Get request report",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequestId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Report payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Request or report not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sourcing/request/{request_id}/approve-supplier": {
+      "post": {
+        "operationId": "approveSupplier",
+        "summary": "Approve supplier in dry_run",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequestId"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateDecisionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Approval result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid decision",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Request not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sourcing/request/{request_id}/reject-supplier": {
+      "post": {
+        "operationId": "rejectSupplier",
+        "summary": "Reject supplier in dry_run",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequestId"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateDecisionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rejection result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid decision",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Request not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "RequestId": {
+        "name": "request_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "Open WebUI sourcing request identifier"
+      }
+    },
+    "schemas": {
+      "Envelope": {
+        "type": "object",
+        "required": [
+          "ok",
+          "service",
+          "framework",
+          "dry_run",
+          "timestamp"
+        ],
+        "properties": {
+          "ok": { "type": "boolean" },
+          "service": { "type": "string" },
+          "framework": { "type": "string" },
+          "dry_run": { "type": "boolean" },
+          "timestamp": { "type": "string" },
+          "data": { "type": ["object", "array", "string", "number", "boolean", "null"] },
+          "error": { "type": ["string", "null"] }
+        },
+        "additionalProperties": true
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "required": [
+          "ok",
+          "service",
+          "framework",
+          "dry_run",
+          "timestamp",
+          "error"
+        ],
+        "properties": {
+          "ok": { "const": false },
+          "service": { "type": "string" },
+          "framework": { "type": "string" },
+          "dry_run": { "type": "boolean" },
+          "timestamp": { "type": "string" },
+          "error": { "type": "string" },
+          "details": { "type": ["array", "object", "string", "null"] }
+        },
+        "additionalProperties": true
+      },
+      "SourcingRequestInput": {
+        "type": "object",
+        "required": ["product_description", "region", "quantity", "application", "customer", "notes", "attachments"],
+        "properties": {
+          "product_description": { "type": "string" },
+          "region": { "type": "string" },
+          "quantity": { "type": "string" },
+          "application": { "type": "string" },
+          "customer": { "type": "string" },
+          "notes": { "type": "string" },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": ["string", "object", "number", "boolean", "null"]
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "CandidateDecisionInput": {
+        "type": "object",
+        "properties": {
+          "candidate_id": {
+            "type": "string",
+            "description": "Optional candidate identifier to approve/reject explicitly"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}
