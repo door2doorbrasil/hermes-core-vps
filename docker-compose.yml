@@ -66,8 +66,9 @@ services:
     <<: *hermes-image
     restart: unless-stopped
     command:
-      - sleep
-      - infinity
+      - hermes
+      - gateway
+      - run
     environment:
       <<: *hermes-common-env
       HERMES_DASHBOARD: "true"
@@ -88,26 +89,6 @@ services:
       - traefik.http.routers.hermes-dashboard.tls=true
       - traefik.http.routers.hermes-dashboard.tls.certresolver=letsencrypt
       - traefik.http.services.hermes-dashboard.loadbalancer.server.port=4860
-    networks:
-      - edge
-
-  hermes-rfq-mail-worker:
-    <<: *hermes-image
-    restart: unless-stopped
-    command:
-      - python3
-      - /opt/data/hermes-mail/scripts/rfq_email_worker.py
-      - run
-      - --interval
-      - "120"
-      - --max-replies
-      - "10"
-    environment:
-      <<: *hermes-common-env
-    volumes:
-      - hermes-data:/opt/data
-    depends_on:
-      - hermes-agent
     networks:
       - edge
 

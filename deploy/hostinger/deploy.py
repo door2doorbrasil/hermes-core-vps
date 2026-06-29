@@ -45,6 +45,8 @@ DEPLOY_ENV_KEYS = [
     "HERMES_DASHBOARD_PUBLIC_URL",
     "HERMES_DASHBOARD_HOSTNAME",
     "OPEN_WEBUI_HOSTNAME",
+    # WhatsApp bridge access control for the business number.
+    "WHATSAPP_ALLOWED_USERS",
     "BUY_IMAP_HOST",
     "BUY_IMAP_PORT",
     "BUY_IMAP_SSL",
