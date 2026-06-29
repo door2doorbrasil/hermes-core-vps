@@ -23,8 +23,7 @@ jobs:
           HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
           HOSTINGER_VPS_ID: "1783294"
           HOSTINGER_PROJECT_NAME: hermes-core
-          HOSTINGER_REPO_URL: https://github.com/${{ github.repository }}
-          HOSTINGER_DELETE_PROJECTS: polar-sinergy,hermes-agent,hermes-gateway,hermes-core
+          HOSTINGER_STOP_PROJECTS: polar-sinergy,hermes-agent,hermes-gateway
           HOSTINGER_SMOKE_URL: https://hermes.polarsinergy.com
           HOSTINGER_SMOKE_EXPECT: Hermes
           HOSTINGER_POLL_ATTEMPTS: "120"
@@ -39,4 +38,5 @@ jobs:
           HERMES_API_HOSTNAME: api.hermes.polarsinergy.com
           OPEN_WEBUI_HOSTNAME: webui.hermes.polarsinergy.com
           LITELLM_MASTER_KEY: ${{ secrets.LITELLM_MASTER_KEY }}
+          HERMES_BUILD_CONTEXT: https://github.com/${{ github.repository }}.git#main
         run: python3 deploy/hostinger/deploy.py

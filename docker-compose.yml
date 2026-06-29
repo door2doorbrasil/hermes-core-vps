@@ -38,7 +38,7 @@ services:
 
   gateway:
     build:
-      context: .
+      context: ${HERMES_BUILD_CONTEXT:-.}
       args:
         HERMES_GIT_SHA: ${HERMES_GIT_SHA:-local}
     image: hermes-core:latest

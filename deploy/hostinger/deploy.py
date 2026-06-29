@@ -17,10 +17,9 @@ API_BASE = os.getenv("HOSTINGER_API_BASE_URL", "https://developers.hostinger.com
 VPS_ID = os.getenv("HOSTINGER_VPS_ID")
 TOKEN = os.getenv("HOSTINGER_API_TOKEN")
 PROJECT_NAME = os.getenv("HOSTINGER_PROJECT_NAME", "hermes-core")
-REPO_URL = os.getenv("HOSTINGER_REPO_URL")
-DELETE_PROJECTS = [
+STOP_PROJECTS = [
     item.strip()
-    for item in os.getenv("HOSTINGER_DELETE_PROJECTS", PROJECT_NAME).split(",")
+    for item in os.getenv("HOSTINGER_STOP_PROJECTS", "").split(",")
     if item.strip()
 ]
 SMOKE_URL = os.getenv("HOSTINGER_SMOKE_URL")
@@ -93,9 +92,15 @@ def build_environment_blob() -> str:
 
 
 def deploy_project() -> None:
+    compose_path = os.path.join(os.getcwd(), "docker-compose.yml")
+    try:
+        content = open(compose_path, "r", encoding="utf-8").read()
+    except OSError as exc:
+        fail(f"Unable to read docker-compose.yml: {exc}")
+
     payload: dict[str, Any] = {
         "project_name": PROJECT_NAME,
-        "content": REPO_URL,
+        "content": content,
     }
     environment = build_environment_blob()
     if environment:
@@ -148,20 +153,17 @@ def main() -> None:
         fail("HOSTINGER_VPS_ID is required")
     if not TOKEN:
         fail("HOSTINGER_API_TOKEN is required")
-    if not REPO_URL:
-        fail("HOSTINGER_REPO_URL is required")
-
     print(f"Using Hostinger API at {API_BASE}")
     print(f"Target VPS: {VPS_ID}")
     print(f"Project: {PROJECT_NAME}")
 
     existing = {project.get('name') for project in get_projects() if project.get('name')}
-    for name in DELETE_PROJECTS:
+    for name in STOP_PROJECTS:
         if name in existing:
-            print(f"Removing existing project: {name}")
-            delete_project(name)
+            print(f"Stopping existing project: {name}")
+            request("POST", f"/api/vps/v1/virtual-machines/{VPS_ID}/docker/{quote(name)}/stop")
 
-    print(f"Deploying {PROJECT_NAME} from {REPO_URL}")
+    print(f"Deploying {PROJECT_NAME} from raw docker-compose content")
     deploy_project()
 
     for attempt in range(1, POLL_ATTEMPTS + 1):
