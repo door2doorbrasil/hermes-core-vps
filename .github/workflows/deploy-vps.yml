@@ -59,6 +59,7 @@ jobs:
           HOSTINGER_STOP_PROJECTS: polar-sinergy,hermes-agent,hermes-gateway
           HOSTINGER_SMOKE_URL: https://hermes.polarsinergy.com/login?next=%2F
           HOSTINGER_SMOKE_EXPECT: password
+          HOSTINGER_SMOKE_TIMEOUT: "420"
           HOSTINGER_POLL_ATTEMPTS: "120"
           HERMES_IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
           ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
