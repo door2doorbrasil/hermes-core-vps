@@ -71,6 +71,13 @@ DEPLOY_ENV_KEYS = [
     "SALES_SMTP_PASSWORD",
 ]
 
+REQUIRED_CONTAINER_NAMES = (
+    "hermes-core-hermes-agent-1",
+    "hermes-core-litellm-1",
+    "hermes-core-open-webui-1",
+    "hermes-core-traefik-1",
+)
+
 
 def fail(message: str) -> None:
     print(message, file=sys.stderr)
@@ -185,6 +192,14 @@ def summarize_container_states(containers: list[dict[str, Any]]) -> str:
     return ", ".join(f"{state}({count})" for state, count in sorted(counts.items()))
 
 
+def running_container_names(containers: list[dict[str, Any]]) -> set[str]:
+    names: set[str] = set()
+    for container in containers:
+        if str(container.get("state") or "") == "running":
+            names.add(str(container.get("name") or ""))
+    return names
+
+
 def wait_for_project() -> dict[str, Any]:
     for _ in range(POLL_ATTEMPTS):
         for project in get_projects():
@@ -246,10 +261,9 @@ def main() -> None:
         print(f"Poll {attempt}/{POLL_ATTEMPTS}: state={state} status={status}")
         if containers:
             print(f"Containers: {summarize_container_states(containers)}")
-        if state in {"running", "mixed"} and containers:
-            healthy = any(c.get("state") == "running" for c in containers)
-            if healthy:
-                break
+        running_names = running_container_names(containers)
+        if all(name in running_names for name in REQUIRED_CONTAINER_NAMES):
+            break
         time.sleep(POLL_SECONDS)
     else:
         fail("Project did not reach a healthy state in time")
