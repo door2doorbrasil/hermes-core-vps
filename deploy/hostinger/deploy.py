@@ -230,6 +230,11 @@ def main() -> None:
             print(f"Stopping existing project: {name}")
             request("POST", f"/api/vps/v1/virtual-machines/{VPS_ID}/docker/{quote(name)}/stop")
 
+    if PROJECT_NAME in existing:
+        print(f"Resetting target project: {PROJECT_NAME}")
+        delete_project(PROJECT_NAME)
+        time.sleep(10)
+
     print(f"Deploying {PROJECT_NAME} from raw docker-compose content")
     deploy_project()
 
