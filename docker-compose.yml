@@ -52,6 +52,10 @@ services:
         webui.hermes.polarsinergy.com {
           reverse_proxy open-webui:8080
         }
+
+        litellm.hermes.polarsinergy.com {
+          reverse_proxy litellm:4000
+        }
         EOF
         exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
     ports:
@@ -129,6 +133,8 @@ services:
     environment:
       OPENAI_API_BASE_URL: http://litellm:4000/v1
       OPENAI_API_KEY: ${LITELLM_MASTER_KEY:-sk-local}
+      WEBUI_URL: ${OPEN_WEBUI_PUBLIC_URL:-https://webui.hermes.polarsinergy.com}
+      CORS_ALLOW_ORIGIN: ${OPEN_WEBUI_PUBLIC_URL:-https://webui.hermes.polarsinergy.com}
       BYPASS_MODEL_ACCESS_CONTROL: "True"
       FORWARDED_ALLOW_IPS: "*"
       SCARF_NO_ANALYTICS: "true"

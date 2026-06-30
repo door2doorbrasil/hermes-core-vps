@@ -70,6 +70,7 @@ jobs:
           HERMES_DASHBOARD_PUBLIC_URL: https://hermes.polarsinergy.com
           HERMES_DASHBOARD_HOSTNAME: hermes.polarsinergy.com
           OPEN_WEBUI_HOSTNAME: webui.hermes.polarsinergy.com
+          OPEN_WEBUI_PUBLIC_URL: https://webui.hermes.polarsinergy.com
           LITELLM_MASTER_KEY: ${{ secrets.LITELLM_MASTER_KEY }}
           WHATSAPP_ALLOWED_USERS: ${{ secrets.HERMES_WHATSAPP_ALLOWED_USERS }}
           BUY_IMAP_HOST: ${{ secrets.BUY_IMAP_HOST }}
