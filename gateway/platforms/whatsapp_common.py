@@ -405,6 +405,10 @@ def resolve_whatsapp_bridge_dir() -> Path:
     import shutil
     from pathlib import Path as _Path
 
+    def _sha256(path: _Path) -> str:
+        import hashlib
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
     # Default location in install tree (may be read-only)
     from hermes_constants import get_hermes_home
     install_bridge = _Path(__file__).resolve().parents[2] / "scripts" / "whatsapp-bridge"
@@ -425,9 +429,32 @@ def resolve_whatsapp_bridge_dir() -> Path:
     if install_writable:
         return install_bridge
 
-    # Install dir is read-only, mirror to HERMES_HOME if needed
+    install_pkg = install_bridge / "package.json"
+    install_stamp = install_bridge / "node_modules" / ".hermes-pkg-hash"
+
+    # Install dir is read-only, mirror to HERMES_HOME if needed. Refresh an
+    # existing HERMES_HOME copy whenever it is stale or incomplete so Docker
+    # deployments pick up the image-baked bridge dependencies instead of
+    # reusing an old source-only copy from persisted data.
     if hermes_home_bridge.exists():
-        return hermes_home_bridge
+        try:
+            home_pkg = hermes_home_bridge / "package.json"
+            home_stamp = hermes_home_bridge / "node_modules" / ".hermes-pkg-hash"
+            install_hash = _sha256(install_pkg)
+            home_hash = _sha256(home_pkg)
+            install_stamp_value = install_stamp.read_text().strip() if install_stamp.exists() else ""
+            home_stamp_value = home_stamp.read_text().strip() if home_stamp.exists() else ""
+            bridge_fresh = (
+                home_hash == install_hash and
+                bool(home_stamp_value) and
+                home_stamp_value == install_stamp_value and
+                (hermes_home_bridge / "node_modules").exists()
+            )
+            if bridge_fresh:
+                return hermes_home_bridge
+            shutil.rmtree(hermes_home_bridge)
+        except Exception:
+            return install_bridge
 
     # Mirror the bridge source to HERMES_HOME
     try:
