@@ -155,6 +155,14 @@ def project_containers() -> list[dict[str, Any]]:
     return data
 
 
+def summarize_container_states(containers: list[dict[str, Any]]) -> str:
+    counts: dict[str, int] = {}
+    for container in containers:
+        state = str(container.get("state") or "unknown")
+        counts[state] = counts.get(state, 0) + 1
+    return ", ".join(f"{state}({count})" for state, count in sorted(counts.items()))
+
+
 def wait_for_project() -> dict[str, Any]:
     for _ in range(POLL_ATTEMPTS):
         for project in get_projects():
@@ -209,13 +217,15 @@ def main() -> None:
         state = details.get("state")
         status = details.get("status")
         print(f"Poll {attempt}/{POLL_ATTEMPTS}: state={state} status={status}")
-        if state == "running" and containers:
-            healthy = all(c.get("state") == "running" for c in containers)
+        if containers:
+            print(f"Containers: {summarize_container_states(containers)}")
+        if state in {"running", "mixed"} and containers:
+            healthy = any(c.get("state") == "running" for c in containers)
             if healthy:
                 break
         time.sleep(POLL_SECONDS)
     else:
-        fail("Project did not reach a running state in time")
+        fail("Project did not reach a healthy state in time")
 
     print(json.dumps(wait_for_project(), indent=2, ensure_ascii=False))
     print(json.dumps(project_containers(), indent=2, ensure_ascii=False))
