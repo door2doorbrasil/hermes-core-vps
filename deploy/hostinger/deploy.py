@@ -148,6 +148,10 @@ def delete_project(name: str) -> None:
     request("DELETE", f"/api/vps/v1/virtual-machines/{VPS_ID}/docker/{quote(name)}/down")
 
 
+def start_project(name: str) -> None:
+    request("POST", f"/api/vps/v1/virtual-machines/{VPS_ID}/docker/{quote(name)}/start")
+
+
 def build_environment_blob() -> str:
     lines: list[str] = []
     for key in DEPLOY_ENV_KEYS:
@@ -252,6 +256,9 @@ def main() -> None:
 
     print(f"Deploying {PROJECT_NAME} from raw docker-compose content")
     deploy_project()
+    time.sleep(10)
+    print(f"Starting project: {PROJECT_NAME}")
+    start_project(PROJECT_NAME)
 
     for attempt in range(1, POLL_ATTEMPTS + 1):
         details = wait_for_project()
