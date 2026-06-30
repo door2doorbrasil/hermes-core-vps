@@ -98,15 +98,36 @@ def request(method: str, path: str, payload: dict[str, Any] | None = None) -> An
         data = json.dumps(payload).encode("utf-8")
 
     req = Request(url, data=data, headers=headers, method=method)
-    try:
-        with urlopen(req, timeout=120, context=ssl_context()) as response:
-            body = response.read().decode("utf-8").strip()
-            return json.loads(body) if body else None
-    except HTTPError as exc:
-        body = exc.read().decode("utf-8", errors="replace")
-        fail(f"{method} {path} failed: HTTP {exc.code} {exc.reason}\n{body}")
-    except URLError as exc:
-        fail(f"{method} {path} failed: {exc.reason}")
+    attempts = 1
+    if method == "GET":
+        attempts = 6
+
+    last_error: str | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            with urlopen(req, timeout=120, context=ssl_context()) as response:
+                body = response.read().decode("utf-8").strip()
+                return json.loads(body) if body else None
+        except HTTPError as exc:
+            body = exc.read().decode("utf-8", errors="replace")
+            last_error = f"{method} {path} failed: HTTP {exc.code} {exc.reason}\n{body}"
+            if (
+                method == "GET"
+                and exc.code == 400
+                and "Temporary Docker Manager issue" in body
+                and attempt < attempts
+            ):
+                time.sleep(5)
+                continue
+            fail(last_error)
+        except URLError as exc:
+            last_error = f"{method} {path} failed: {exc.reason}"
+            if method == "GET" and attempt < attempts:
+                time.sleep(5)
+                continue
+            fail(last_error)
+
+    fail(last_error or f"{method} {path} failed")
 
 
 def get_projects() -> list[dict[str, Any]]:
