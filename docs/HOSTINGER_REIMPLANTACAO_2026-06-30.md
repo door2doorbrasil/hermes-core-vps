@@ -81,3 +81,10 @@ Subir o Hermes customizado do repositório local para a VPS Hostinger de forma l
 
 - O `Open WebUI` e o `LiteLLM` subiram no container, mas o endpoint HTTP nao estava respondendo de forma estavel durante este smoke.
 - Isso nao bloqueia o corte do Hermes principal, mas merece uma validacao separada depois da virada da VPS.
+
+## Validacao publica atual
+
+- `hermes.polarsinergy.com` resolve para `2.24.215.223` e responde com o fluxo esperado de login.
+- `webui.hermes.polarsinergy.com` tambem resolve para `2.24.215.223`, mas responde `404 page not found` em `/`, `/login` e `/api/v1/models`.
+- `litellm.hermes.polarsinergy.com` ainda nao possui resolucao DNS publica.
+- Isso indica que o Hermes principal esta publicado, mas os servicos auxiliares ainda precisam de ajuste de publicacao/roteamento separado.
