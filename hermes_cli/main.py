@@ -2421,9 +2421,15 @@ def cmd_proxy(args):
 
 def cmd_whatsapp(args):
     """Set up WhatsApp: choose mode, configure, install bridge, pair via QR."""
-    _require_tty("whatsapp")
+    pair_only = bool(getattr(args, "pair_only", False))
+    if not pair_only:
+        _require_tty("whatsapp")
     from hermes_cli.config import get_env_value, save_env_value
-    from hermes_constants import find_node_executable, with_hermes_node_path
+    from hermes_constants import (
+        find_node_executable,
+        get_hermes_dir,
+        with_hermes_node_path,
+    )
 
     print()
     print("⚕ WhatsApp Setup")
@@ -2432,6 +2438,10 @@ def cmd_whatsapp(args):
     # ── Step 1: Choose mode ──────────────────────────────────────────────
     current_mode = get_env_value("WHATSAPP_MODE") or ""
     if not current_mode:
+        if pair_only:
+            print("✗ WHATSAPP_MODE is not configured.")
+            print("  Set WHATSAPP_MODE first or run `hermes whatsapp` interactively once.")
+            return
         print()
         print("How will you use WhatsApp with Hermes?")
         print()
@@ -2496,34 +2506,38 @@ def cmd_whatsapp(args):
     current_users = get_env_value("WHATSAPP_ALLOWED_USERS") or ""
     if current_users:
         print(f"✓ Message permissions: {current_users}")
-        try:
-            response = input("\n  Update who can message this WhatsApp? [y/N] ").strip()
-        except (EOFError, KeyboardInterrupt):
-            response = "n"
-        if response.lower() in {"y", "yes"}:
+        if not pair_only:
+            try:
+                response = input("\n  Update who can message this WhatsApp? [y/N] ").strip()
+            except (EOFError, KeyboardInterrupt):
+                response = "n"
+            if response.lower() in {"y", "yes"}:
+                if wa_mode == "bot":
+                    phone = input(
+                        "  Phone numbers that can message this WhatsApp (comma-separated): "
+                    ).strip()
+                else:
+                    phone = input("  Your phone number (e.g. 15551234567): ").strip()
+                if phone:
+                    save_env_value("WHATSAPP_ALLOWED_USERS", phone.replace(" ", ""))
+                    print(f"  ✓ Updated to: {phone}")
+    else:
+        print()
+        if pair_only:
+            print("  ⚠ No allowlist configured — existing gateway policy will be used.")
+        else:
             if wa_mode == "bot":
+                print("  Who should be able to message this WhatsApp?")
                 phone = input(
-                    "  Phone numbers that can message this WhatsApp (comma-separated): "
+                    "  Phone numbers (comma-separated, or * for anyone): "
                 ).strip()
             else:
                 phone = input("  Your phone number (e.g. 15551234567): ").strip()
             if phone:
                 save_env_value("WHATSAPP_ALLOWED_USERS", phone.replace(" ", ""))
-                print(f"  ✓ Updated to: {phone}")
-    else:
-        print()
-        if wa_mode == "bot":
-            print("  Who should be able to message this WhatsApp?")
-            phone = input(
-                "  Phone numbers (comma-separated, or * for anyone): "
-            ).strip()
-        else:
-            phone = input("  Your phone number (e.g. 15551234567): ").strip()
-        if phone:
-            save_env_value("WHATSAPP_ALLOWED_USERS", phone.replace(" ", ""))
-            print(f"  ✓ Message permissions set: {phone}")
-        else:
-            print("  ⚠ No allowlist — WhatsApp will accept incoming messages from any number")
+                print(f"  ✓ Message permissions set: {phone}")
+            else:
+                print("  ⚠ No allowlist — WhatsApp will accept incoming messages from any number")
 
     # ── Step 4: Install bridge dependencies ──────────────────────────────
     from gateway.platforms.whatsapp_common import resolve_whatsapp_bridge_dir
@@ -2567,11 +2581,21 @@ def cmd_whatsapp(args):
         print("✓ Bridge dependencies already installed")
 
     # ── Step 5: Check for existing session ───────────────────────────────
-    session_dir = get_hermes_home() / "whatsapp" / "session"
+    session_dir = get_hermes_dir("platforms/whatsapp/session", "whatsapp/session")
     session_dir.mkdir(parents=True, exist_ok=True)
 
     if (session_dir / "creds.json").exists():
         print("✓ Existing WhatsApp session found")
+        if pair_only:
+            # Existing pairing — ensure WHATSAPP_ENABLED reflects that.
+            # (Older installs may have lost the env var; covers re-runs
+            # where the user picked "no, keep my session" but the var
+            # was never set or got removed.)
+            if (get_env_value("WHATSAPP_ENABLED") or "").lower() != "true":
+                save_env_value("WHATSAPP_ENABLED", "true")
+            print("\n✓ WhatsApp is already paired.")
+            print("  Delete the existing session first if you need to force a new QR.")
+            return
         try:
             response = input(
                 "\n  Re-pair? This will clear the existing session. [y/N] "
@@ -2583,10 +2607,6 @@ def cmd_whatsapp(args):
             session_dir.mkdir(parents=True, exist_ok=True)
             print("  ✓ Session cleared")
         else:
-            # Existing pairing — ensure WHATSAPP_ENABLED reflects that.
-            # (Older installs may have lost the env var; covers re-runs
-            # where the user picked "no, keep my session" but the var
-            # was never set or got removed.)
             if (get_env_value("WHATSAPP_ENABLED") or "").lower() != "true":
                 save_env_value("WHATSAPP_ENABLED", "true")
             print("\n✓ WhatsApp is configured and paired!")

@@ -19,4 +19,12 @@ def build_whatsapp_parser(subparsers, *, cmd_whatsapp: Callable) -> None:
         help="Set up WhatsApp integration",
         description="Configure WhatsApp and pair via QR code",
     )
+    whatsapp_parser.add_argument(
+        "--pair-only",
+        action="store_true",
+        help=(
+            "Skip the interactive setup prompts and only run QR pairing "
+            "using the current WhatsApp environment/config."
+        ),
+    )
     whatsapp_parser.set_defaults(func=cmd_whatsapp)
