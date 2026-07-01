@@ -199,7 +199,7 @@ if [ "$needs_chown" = true ]; then
     # Hermes-owned subdirs: recursive chown is safe here because these are
     # created and managed exclusively by hermes (see the s6-setuidgid mkdir
     # -p block below for the canonical list).
-    for sub in cron sessions logs hooks memories skills skins plans workspace home profiles pairing platforms/pairing; do
+    for sub in cron sessions logs hooks memories skills skins plans workspace home profiles pairing platforms/pairing whatsapp scripts; do
         if [ -e "$HERMES_HOME/$sub" ]; then
             chown -R hermes:hermes "$HERMES_HOME/$sub" 2>/dev/null || \
                 echo "[stage2] Warning: chown $HERMES_HOME/$sub failed (rootless container?) — continuing"
@@ -232,6 +232,19 @@ fi
 # after root-context maintenance commands or scheduler writes.
 if [ -d "$HERMES_HOME/cron" ]; then
     chown -R hermes:hermes "$HERMES_HOME/cron" 2>/dev/null || true
+fi
+
+# Always reset ownership of the persisted WhatsApp runtime tree and mirrored
+# scripts/. In Docker, the Node bridge mirrors to $HERMES_HOME/scripts and
+# persists auth/session state under $HERMES_HOME/whatsapp. Both paths can
+# become root-owned after maintenance commands or previous container runs,
+# which then breaks Baileys session writes with EACCES and forces repeated
+# runtime npm-install attempts against the mirrored bridge copy.
+if [ -d "$HERMES_HOME/whatsapp" ]; then
+    chown -R hermes:hermes "$HERMES_HOME/whatsapp" 2>/dev/null || true
+fi
+if [ -d "$HERMES_HOME/scripts" ]; then
+    chown -R hermes:hermes "$HERMES_HOME/scripts" 2>/dev/null || true
 fi
 
 # Reset ownership of hermes-owned top-level state files on every boot.
