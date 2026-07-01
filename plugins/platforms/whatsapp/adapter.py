@@ -284,6 +284,22 @@ def _file_content_hash(path: Path) -> str:
         return ""
 
 
+def _file_content_hash_full(path: Path) -> str:
+    """Return the full SHA-256 hex digest of *path*'s contents.
+
+    Used for dependency freshness stamps under ``node_modules``. Those stamps
+    persist the complete package.json hash, so comparing them against the
+    truncated bridge-script hash would force a needless ``npm install`` on
+    every gateway restart.
+    """
+    import hashlib
+
+    try:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError:
+        return ""
+
+
 def check_whatsapp_requirements() -> bool:
     """
     Check if WhatsApp dependencies are available.
@@ -476,7 +492,7 @@ class WhatsAppAdapter(WhatsAppBehaviorMixin, BasePlatformAdapter):
             bridge_dir = bridge_path.parent
             _pkg_json = bridge_dir / "package.json"
             _dep_stamp = bridge_dir / "node_modules" / ".hermes-pkg-hash"
-            _pkg_hash = _file_content_hash(_pkg_json)
+            _pkg_hash = _file_content_hash_full(_pkg_json)
             _deps_fresh = False
             if (bridge_dir / "node_modules").exists():
                 try:
