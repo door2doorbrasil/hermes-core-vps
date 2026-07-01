@@ -11,8 +11,6 @@ from typing import Any, Iterable
 
 from agent.secret_scope import get_secret
 from hermes_cli.config import cfg_get, load_config
-from aivo_learning import ensure_aivo_learning_store
-from business.aivo.product_analysis import format_product_analysis_block
 from providers.provider_result import ProviderResult
 from business.aivo.sales_brain import SalesBrain
 from business.aivo.prompts import build_intent_prompt
@@ -438,6 +436,8 @@ def _normalize_learning_context(learning_context: Any, conversation_mode: str) -
     if ctx.get("approved_playbook") and ctx.get("approved_faq") and ctx.get("contact_profile") is not None:
         return ctx
     try:
+        from aivo_learning import ensure_aivo_learning_store
+
         store = ensure_aivo_learning_store()
         fallback = store.build_prompt_context(
             contact_id=str(ctx.get("contact_id") or "unknown"),
@@ -455,6 +455,8 @@ def _normalize_learning_context(learning_context: Any, conversation_mode: str) -
 
 
 def _compose_learning_context_block(prompt_context: dict[str, Any], conversation_mode: str) -> str:
+    from business.aivo.product_analysis import format_product_analysis_block
+
     contact_profile = prompt_context.get("contact_profile") or {}
     product_profile = prompt_context.get("product_profile") or {}
     contact_text = json.dumps(contact_profile, ensure_ascii=False, sort_keys=True) if isinstance(contact_profile, dict) else str(contact_profile)

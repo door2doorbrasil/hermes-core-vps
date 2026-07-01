@@ -1368,15 +1368,83 @@ _PORT_BINDING_PLATFORM_VALUES = frozenset({
 
 
 # HERMES_AIVO_OPENAI_ROUTER
-from aivo_route_detector import aivo_route_decision as _aivo_route_decision
-from aivo_route_detector import extract_aivo_text as _aivo_extract_text
-from aivo_route_detector import should_route_to_aivo_openai as _aivo_should_route_to_openai
-from providers.openai_aivo_provider import (
-    AivoOpenAIConfigurationError,
-    AivoOpenAIProviderError,
-    OpenAivoProvider,
-)
-from aivo_learning import build_aivo_learning_prompt_context, record_aivo_whatsapp_turn
+_AIVO_OPENAI_IMPORT_ERROR = None
+_AIVO_OPENAI_IMPORT_WARNED = False
+
+try:
+    from aivo_route_detector import aivo_route_decision as _aivo_route_decision
+    from aivo_route_detector import extract_aivo_text as _aivo_extract_text
+    from aivo_route_detector import should_route_to_aivo_openai as _aivo_should_route_to_openai
+    from providers.openai_aivo_provider import (
+        AivoOpenAIConfigurationError,
+        AivoOpenAIProviderError,
+        OpenAivoProvider,
+    )
+    from aivo_learning import build_aivo_learning_prompt_context, record_aivo_whatsapp_turn
+except Exception as exc:
+    _AIVO_OPENAI_IMPORT_ERROR = exc
+
+    @dataclasses.dataclass(slots=True)
+    class _AivoRouteDecisionFallback:
+        should_route: bool
+        reason: str = ""
+        text: str = ""
+        sender_id: str = ""
+        mode: str = "sales"
+
+    class AivoOpenAIConfigurationError(RuntimeError):
+        """Raised when the OpenAI-backed AIVO provider cannot be configured."""
+
+    class AivoOpenAIProviderError(RuntimeError):
+        """Raised when the OpenAI-backed AIVO provider receives a bad response."""
+
+    class OpenAivoProvider:
+        @classmethod
+        def from_runtime(cls):
+            raise AivoOpenAIConfigurationError(
+                f"AIVO OpenAI runtime unavailable: {_AIVO_OPENAI_IMPORT_ERROR}"
+            )
+
+    def _aivo_route_decision(event, local_vars=None):
+        return _AivoRouteDecisionFallback(
+            should_route=False,
+            reason=f"aivo_import_failed:{type(_AIVO_OPENAI_IMPORT_ERROR).__name__}",
+        )
+
+    def _aivo_extract_text(event):
+        return ""
+
+    def _aivo_should_route_to_openai(event, local_vars=None):
+        return False
+
+    def build_aivo_learning_prompt_context(**kwargs):
+        return {
+            "contact_id": str(kwargs.get("contact_id") or "unknown"),
+            "sender_id": str(kwargs.get("sender_id") or ""),
+            "chat_id": str(kwargs.get("chat_id") or ""),
+            "contact_name": str(kwargs.get("contact_name") or ""),
+            "conversation_mode": str(kwargs.get("conversation_mode") or "sales"),
+            "product_id": str(kwargs.get("product_id") or ""),
+            "approved_playbook": "",
+            "approved_faq": "",
+            "contact_profile": {},
+            "product_profile": {},
+            "conversation_summary": "",
+        }
+
+    def record_aivo_whatsapp_turn(**kwargs):
+        return {"status": "disabled", "reason": str(_AIVO_OPENAI_IMPORT_ERROR)}
+
+
+def _warn_aivo_runtime_unavailable() -> None:
+    global _AIVO_OPENAI_IMPORT_WARNED
+    if _AIVO_OPENAI_IMPORT_WARNED or _AIVO_OPENAI_IMPORT_ERROR is None:
+        return
+    _AIVO_OPENAI_IMPORT_WARNED = True
+    logging.getLogger(__name__).warning(
+        "AIVO OpenAI runtime disabled; gateway will fall back to the legacy flow: %s",
+        _AIVO_OPENAI_IMPORT_ERROR,
+    )
 
 
 def _hermes_aivo_extract_text(event):
@@ -1384,10 +1452,12 @@ def _hermes_aivo_extract_text(event):
 
 
 def _hermes_aivo_should_use_openai(event, local_vars=None):
+    _warn_aivo_runtime_unavailable()
     return _aivo_should_route_to_openai(event, local_vars)
 
 
 def _hermes_aivo_decision(event, local_vars=None):
+    _warn_aivo_runtime_unavailable()
     return _aivo_route_decision(event, local_vars)
 
 
@@ -1399,6 +1469,7 @@ async def _hermes_aivo_answer_with_openai(message, learning_context=None, conver
 
 
 def _hermes_aivo_learning_context(source, conversation_mode="sales", contact_name="", recent_history=None):
+    _warn_aivo_runtime_unavailable()
     sender_id = (
         getattr(source, "user_id", None)
         or getattr(source, "user_id_alt", None)
